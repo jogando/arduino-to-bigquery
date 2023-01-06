@@ -1,5 +1,9 @@
 # arduino-to-bigquery
 
+## Architecture
+
+![device](/attachments/architecture.png)
+
 ## Deploy GCP infrastructure
 
 We need to have a *GCS Bucket* for storing the *Terraform state*.
@@ -76,6 +80,8 @@ gcloud iot devices create $DEVICE --region=$REGION \
 
 You should get a message `Created device [greenhouse].` and be able to see the device in *GCP*.
 
+![device](/attachments/iot-core-device.png)
+
 ### Configuring the device - ciotc_config.h
 
 You need to update these variables with your own values
@@ -105,7 +111,7 @@ You should see something like this (depending the log level you have configured 
 Connecting to WiFi
 Waiting on time sync...
 Connecting...
-eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NzMwMTY0NDYsImV4cCI6MTY3MzAyMDA0NiwiYXVkIjoianVsaWFub2dhbmRvLXNhbmRib3gifQ.tt7ecaQwbRmhIEI_WJ6BsHiLLFBlU6iX5Nhtq6QbfqrPNk7TffW7qYrMQu85CwD7QOm6tYwTUK61oTaecaAnAA
+[---JWT printed---]
 connected
 
 Library connected!
@@ -113,3 +119,17 @@ Incoming Topic: /devices/greenhouse/config
 Outcoming: subtopic: /greenhouse/temperature,data: 21
 Outcoming: subtopic: /greenhouse/humidity,data: 22
 ```
+
+If we take a look at the *Bigquery* table, we will see the raw data
+
+![bq raw](/attachments/bq-raw-table.png)
+
+We can execute this query for visualizing the data in a cleaner way
+
+```
+select publish_time, attributes.subFolder as sensor, SAFE_CAST(TRIM(data) AS INT64) AS value from `iotdata.iot-data-raw` 
+order by publish_time desc
+limit 1000
+```
+
+![clean data](/attachments/clean-iot-data.png)
